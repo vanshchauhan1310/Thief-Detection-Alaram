@@ -97,9 +97,6 @@ const renderPredictions = (predictions, ctx) => {
       playAudio()
     }
 
-    if(!isPerson){
-      StopAudio()
-    }
 
   });
 };
@@ -109,10 +106,6 @@ const playAudio =()=>{
   audio.play();
 }
 
- const StopAudio = () =>{
-  const audio = new Audio('./police.mp3');
-  audio.pause();
- }
 
   return (
     <div className="mt-8">
