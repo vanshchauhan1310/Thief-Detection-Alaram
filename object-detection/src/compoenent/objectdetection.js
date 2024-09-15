@@ -6,9 +6,11 @@ import { load as cocoSSDLoad } from "@tensorflow-models/coco-ssd";
 import * as tf from "@tensorflow/tfjs";
 import axios from 'axios';
 
+
 let detectInterval;
 
 const ObjectDetection = () => {
+
   const [isLoading, setIsLoading] = useState(true);
   const [lastAlertTime, setLastAlertTime] = useState(0);
   const alertCooldown = 60000; // 1 minute cooldown
@@ -73,8 +75,7 @@ const ObjectDetection = () => {
     setLastAlertTime(currentTime);
 
     try {
-      const response = await axios.post('/api/send-whatsapp', {
-        message: 'Person detected in the monitored area!'
+      const response = await axios.post('http://localhost:3000/api/send-whatsapp', {
       });
       console.log('WhatsApp alert sent:', response.data);
     } catch (error) {
@@ -82,39 +83,43 @@ const ObjectDetection = () => {
     }
   };
 
+  let whatsappAlertSent = false;
+
   const renderPredictions = (predictions, ctx) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
+  
     const font = "16px sans-serif";
     ctx.font = font;
     ctx.textBaseline = "top";
-
+  
     predictions.forEach((prediction) => {
       const [x, y, width, height] = prediction["bbox"];
-
+  
       const isPerson = prediction.class === "person";
-
+  
       ctx.strokeStyle = isPerson ? "#FF0000" : "#00FFFF";
       ctx.lineWidth = 4;
       ctx.strokeRect(x, y, width, height);
-
+  
       ctx.fillStyle = `rgba(255, 0, 0, ${isPerson ? 0.2 : 0})`;
       ctx.fillRect(x, y, width, height);
-
+  
       ctx.fillStyle = isPerson ? "#FF0000" : "#00FFFF";
       const textWidth = ctx.measureText(prediction.class).width;
       const textHeight = parseInt(font, 10);
       ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
-
+  
       ctx.fillStyle = "#000000";
       ctx.fillText(prediction.class, x, y);
-
-      if (isPerson) {
+  
+      if (isPerson && !whatsappAlertSent) {
         playAudio();
         sendWhatsAppAlert();
+        whatsappAlertSent = true;
       }
     });
   };
+
 
   const playAudio = () => {
     const audio = new Audio('./police.mp3');
@@ -132,6 +137,8 @@ const ObjectDetection = () => {
             className="rounded-md w-full lg:h-[720px]"
             muted
           />
+
+      
 
           <canvas
             ref={canvasRef}
