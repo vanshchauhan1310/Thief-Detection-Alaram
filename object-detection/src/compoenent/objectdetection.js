@@ -7,10 +7,12 @@ import * as tf from "@tensorflow/tfjs";
 import axios from 'axios';
 
 
+
+
 let detectInterval;
 
 const ObjectDetection = () => {
-
+  const [capturedImage, setCapturedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastAlertTime, setLastAlertTime] = useState(0);
   const alertCooldown = 60000; // 1 minute cooldown
@@ -66,7 +68,7 @@ const ObjectDetection = () => {
     showmyVideo();
   }, []);
 
-  const sendWhatsAppAlert = async () => {
+  const sendWhatsAppAlert = async (imageSrc) => {
     const currentTime = Date.now();
     if (currentTime - lastAlertTime < alertCooldown) {
       return;
@@ -75,8 +77,15 @@ const ObjectDetection = () => {
     setLastAlertTime(currentTime);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/send-whatsapp', {
-      });
+      const imageBlob = await fetch(capturedImage).then(res => res.blob());
+    const formData = new FormData();
+    formData.append('image', imageBlob);
+
+    const response = await axios.post('http://localhost:3000/api/send-whatsapp', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
       console.log('WhatsApp alert sent:', response.data);
     } catch (error) {
       console.error('Error sending WhatsApp alert:', error);
@@ -116,15 +125,24 @@ const ObjectDetection = () => {
         playAudio();
         sendWhatsAppAlert();
         whatsappAlertSent = true;
+        captureImage();
       }
+
+
     });
   };
-
+  const captureImage = () => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    console.log(imageSrc)
+    setCapturedImage(imageSrc);
+    sendWhatsAppAlert(imageSrc)
+  };
 
   const playAudio = () => {
     const audio = new Audio('./police.mp3');
     audio.play();
   };
+ 
 
   return (
     <div className="mt-8">
@@ -132,14 +150,19 @@ const ObjectDetection = () => {
         <div className="gradient-text">Loading AI Model...</div>
       ) : (
         <div className="relative flex justify-center items-center gradient p-1.5 rounded-md">
-          <Webcam
-            ref={webcamRef}
-            className="rounded-md w-full lg:h-[720px]"
-            muted
-          />
+        <Webcam
+        ref={webcamRef}
+        src={`http://10.7.1.110/:8080/video`}
+        className="rounded-md w-full lg:h-[720px]"
+        muted
+      />
 
-      
-
+{capturedImage && (
+  <div className="mt-4">
+    <h2 className="text-xl font-bold mb-2">Captured Person:</h2>
+    <img src={capturedImage} alt="Captured person" className="rounded-md" />
+  </div>
+)}
           <canvas
             ref={canvasRef}
             className="absolute top-0 left-0 z-99999 w-full lg:h-[720px]"
@@ -147,6 +170,8 @@ const ObjectDetection = () => {
         </div>
       )}
     </div>
+
+
   );
 };
 

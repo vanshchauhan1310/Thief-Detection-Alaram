@@ -2,6 +2,7 @@
   "name": "object-detection",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +16,9 @@
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
-    "react-webcam": "^7.2.0"
+    "react-native-rtsp": "^1.0.1",
+    "react-webcam": "^7.2.0",
+    "rtsp-player": "^1.0.5"
   },
   "devDependencies": {
     "eslint": "^8",
