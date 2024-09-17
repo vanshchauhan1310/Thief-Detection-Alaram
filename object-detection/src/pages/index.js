@@ -1,4 +1,5 @@
 import ObjectDetection from "../compoenent/objectdetection";
+// import DroidObjectDetection from "@/compoenent/droidcam";
 
 export default function Home() {
   return (
@@ -7,6 +8,7 @@ export default function Home() {
         Thief Detection Alarm
       </h1>
       <ObjectDetection />
+    
     </main>
   );
 }

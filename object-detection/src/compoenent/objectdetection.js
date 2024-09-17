@@ -75,7 +75,7 @@ const ObjectDetection = () => {
     setLastAlertTime(currentTime);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/send-whatsapp', {
+      const response = await axios.post('http://localhost:4000/api/send-whatsapp', {
       });
       console.log('WhatsApp alert sent:', response.data);
     } catch (error) {
