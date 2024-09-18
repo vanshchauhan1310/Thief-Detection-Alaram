@@ -9,6 +9,7 @@ import axios from 'axios';
 
 
 
+
 let detectInterval;
 
 const ObjectDetection = () => {
@@ -73,24 +74,25 @@ const ObjectDetection = () => {
     if (currentTime - lastAlertTime < alertCooldown) {
       return;
     }
-
+  
     setLastAlertTime(currentTime);
+    const formData = new FormData();
+    formData.append('image', imageSrc);
 
     try {
-      const imageBlob = await fetch(capturedImage).then(res => res.blob());
-    const formData = new FormData();
-    formData.append('image', imageBlob);
+      const response = await axios.post('http://localhost:3000/api/send-whatsapp', formData, {
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
+        },
+      });
+  
 
-    const response = await axios.post('http://localhost:3000/api/send-whatsapp', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
       console.log('WhatsApp alert sent:', response.data);
     } catch (error) {
       console.error('Error sending WhatsApp alert:', error);
     }
   };
+
 
   let whatsappAlertSent = false;
 
@@ -123,9 +125,9 @@ const ObjectDetection = () => {
   
       if (isPerson && !whatsappAlertSent) {
         playAudio();
-        sendWhatsAppAlert();
-        whatsappAlertSent = true;
         captureImage();
+        // sendWhatsAppAlert();
+        whatsappAlertSent = true;
       }
 
 
@@ -133,9 +135,13 @@ const ObjectDetection = () => {
   };
   const captureImage = () => {
     const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc)
+    console.log(imageSrc);
     setCapturedImage(imageSrc);
-    sendWhatsAppAlert(imageSrc)
+  
+    const base64Image = imageSrc.replace(/^data:image\/jpeg;base64,/, '');
+    const buffer = Buffer.from(base64Image, 'base64');
+    const blob = new Blob([buffer], { type: 'image/jpeg' });
+    sendWhatsAppAlert(blob);
   };
 
   const playAudio = () => {
