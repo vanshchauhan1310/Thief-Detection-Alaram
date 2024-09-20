@@ -1,14 +1,8 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { load as cocoSSDLoad } from "@tensorflow-models/coco-ssd";
 import * as tf from "@tensorflow/tfjs";
 import axios from 'axios';
-
-
-
-
 
 let detectInterval;
 
@@ -69,30 +63,28 @@ const ObjectDetection = () => {
     showmyVideo();
   }, []);
 
-  const sendWhatsAppAlert = async (imageSrc) => {
+  const sendWhatsAppAlert = async (imageUrl) => {
     const currentTime = Date.now();
     if (currentTime - lastAlertTime < alertCooldown) {
       return;
     }
   
     setLastAlertTime(currentTime);
-    const formData = new FormData();
-    formData.append('image', imageSrc);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/send-whatsapp', formData, {
+      const response = await axios.post('http://localhost:3000/api/send-whatsapp', { imageUrl }, {
         headers: {
-          'Content-Type': `multipart/form-data; boundary=${formData._boundary}`,
+          'Content-Type': 'application/json',
         },
       });
   
-
       console.log('WhatsApp alert sent:', response.data);
     } catch (error) {
       console.error('Error sending WhatsApp alert:', error);
     }
   };
 
+  
 
   let whatsappAlertSent = false;
 
@@ -126,29 +118,50 @@ const ObjectDetection = () => {
       if (isPerson && !whatsappAlertSent) {
         playAudio();
         captureImage();
-        // sendWhatsAppAlert();
         whatsappAlertSent = true;
       }
-
-
     });
   };
-  const captureImage = () => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc);
-    setCapturedImage(imageSrc);
+
+  const captureImage = async () => {
+    try {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (!imageSrc) {
+        console.error('Failed to capture image');
+        return;
+      }
+      setCapturedImage(imageSrc);
   
-    const base64Image = imageSrc.replace(/^data:image\/jpeg;base64,/, '');
-    const buffer = Buffer.from(base64Image, 'base64');
-    const blob = new Blob([buffer], { type: 'image/jpeg' });
-    sendWhatsAppAlert(blob);
+      // Convert base64 to blob
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+  
+      const formData = new FormData();
+      formData.append('file', blob, 'captured_image.jpg');
+  
+      const uploadResponse = await axios.post('http://localhost:3000/api/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      if (uploadResponse.data && uploadResponse.data.url) {
+        const cloudinaryUrl = uploadResponse.data.url;
+        console.log('Image uploaded to Cloudinary:', cloudinaryUrl);
+        sendWhatsAppAlert(cloudinaryUrl);
+      } else {
+        console.error('Invalid response from server:', uploadResponse);
+      }
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error.response ? error.response.data : error.message);
+    }
   };
 
+  
   const playAudio = () => {
     const audio = new Audio('./police.mp3');
     audio.play();
   };
- 
 
   return (
     <div className="mt-8">
@@ -156,19 +169,19 @@ const ObjectDetection = () => {
         <div className="gradient-text">Loading AI Model...</div>
       ) : (
         <div className="relative flex justify-center items-center gradient p-1.5 rounded-md">
-        <Webcam
-        ref={webcamRef}
-        src={`http://10.7.1.110/:8080/video`}
-        className="rounded-md w-full lg:h-[720px]"
-        muted
-      />
+          <Webcam
+            ref={webcamRef}
+            src={`http://10.7.1.110/:8080/video`}
+            className="rounded-md w-full lg:h-[720px]"
+            muted
+          />
 
-{capturedImage && (
-  <div className="mt-4">
-    <h2 className="text-xl font-bold mb-2">Captured Person:</h2>
-    <img src={capturedImage} alt="Captured person" className="rounded-md" />
-  </div>
-)}
+          {capturedImage && (
+            <div className="mt-4">
+              <h2 className="text-xl font-bold mb-2">Captured Person:</h2>
+              <img src={capturedImage} alt="Captured person" className="rounded-md" />
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             className="absolute top-0 left-0 z-99999 w-full lg:h-[720px]"
@@ -176,8 +189,6 @@ const ObjectDetection = () => {
         </div>
       )}
     </div>
-
-
   );
 };
 
