@@ -24,7 +24,8 @@ async function sendWhatsAppMessage(imageUrl) {
       body: `Unknown stranger detected. View image: ${imageUrl}`,
       from: 'whatsapp:+14155238886',  
       to: 'whatsapp:+919818270753',  
-      // mediaUrl: [`${imageUrl}`]
+      // mediaUrl: [imageUrl]
+
     });
     console.log('Message sent successfully. SID:', message.sid);
     return message;
