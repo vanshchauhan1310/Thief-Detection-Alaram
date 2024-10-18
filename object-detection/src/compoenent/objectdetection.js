@@ -72,7 +72,7 @@ const ObjectDetection = () => {
     setLastAlertTime(currentTime);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/send-whatsapp', { imageUrl }, {
+      const response = await axios.post('http://localhost:5000/api/send-whatsapp', { imageUrl }, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -130,20 +130,31 @@ const ObjectDetection = () => {
         console.error('Failed to capture image');
         return;
       }
+      console.log('Image captured successfully');
       setCapturedImage(imageSrc);
   
       // Convert base64 to blob
       const response = await fetch(imageSrc);
       const blob = await response.blob();
+      console.log('Blob created:', blob);
   
       const formData = new FormData();
       formData.append('file', blob, 'captured_image.jpg');
+      console.log('FormData created:', formData);
   
-      const uploadResponse = await axios.post('http://localhost:3000/api/upload-image', formData, {
+      console.log('Sending request to server...');
+      console.log('Uploaded file details:', {
+        originalname: 'captured_image.jpg',
+        mimetype: 'image/jpeg',
+        size: blob.size,
+      });
+  
+      const uploadResponse = await axios.post('http://localhost:5000/api/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+      console.log('Response received from server:', uploadResponse);
   
       if (uploadResponse.data && uploadResponse.data.url) {
         const cloudinaryUrl = uploadResponse.data.url;
@@ -153,11 +164,18 @@ const ObjectDetection = () => {
         console.error('Invalid response from server:', uploadResponse);
       }
     } catch (error) {
-      console.error('Error uploading to Cloudinary:', error.response ? error.response.data : error.message);
+      console.error('Error uploading to Cloudinary:', error);
+      if (error.response) {
+        console.error('Server responded with:', error.response.status, error.response.data);
+      } else if (error.request) {
+        console.error('No response received from server');
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
     }
   };
 
-  
+
   const playAudio = () => {
     const audio = new Audio('./police.mp3');
     audio.play();

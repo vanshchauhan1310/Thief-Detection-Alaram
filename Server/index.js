@@ -68,7 +68,7 @@ app.post('/api/upload-image', upload.single('file'), async (req, res) => {
 
     console.log('Uploaded file:', file);
 
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp','image/jpg'];
     if (!allowedMimeTypes.includes(file.mimetype)) {
       return res.status(400).json({ success: false, error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.' });
     }
@@ -89,14 +89,14 @@ app.post('/api/upload-image', upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
 
-    // Check if the error is from Cloudinary
-    if (error.http_code) {
-      return res.status(error.http_code).json({ 
-        success: false, 
-        error: error.message,
-        details: error
-      });
-    }
+    // // Check if the error is from Cloudinary
+    // if (error.http_code) {
+    //   return res.status(error.http_code).json({ 
+    //     success: false, 
+    //     error: error.message,
+    //     details: error
+    //   });
+    // }
 
     res.status(500).json({ success: false, error: error.message });
   }
